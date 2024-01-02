@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator pothos {
+  provider = "prisma-pothos-types"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  createdAt   DateTime      @default(now())
+  cash        Int
+  gameIds     String[]      @default([]) @db.ObjectId
+  games       Game[]        @relation(fields: [gameIds], references: [id])
+  gameStats   GameStats[]   @relation("GameStatsToPlayer")
+}
+
+model Property { 
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  type      String
+  editionId String  @db.ObjectId
+  edition   Edition @relation(fields: [editionId], references: [id])
+  // rent details
+  // value details
+  // mortgage details
+  // property details
+}
+
+model Edition {
+  id                 String     @id @default(auto()) @map("_id") @db.ObjectId
+  edition            String 
+  numOfProperties    Int
+  playerStartingCash Int
+  properties         Property[]
+  games              Game[]     @relation("EditionToGame")
+}
+
+model Game {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  editionId   String        @db.ObjectId
+  edition     Edition       @relation("EditionToGame", fields: [editionId], references: [id])
+  playerIds   String[]      @db.ObjectId
+  players     Player[]      @relation(fields: [playerIds], references: [id])
+  gameStats   GameStats[]   @relation("GameStatsToGame")
+  createdAt   DateTime      @default(now())
+}
+
+model GameStats {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  playerId    String @db.ObjectId
+  player      Player @relation("GameStatsToPlayer", fields: [playerId], references: [id])
+  gameId      String @db.ObjectId
+  game        Game   @relation("GameStatsToGame", fields: [gameId], references: [id])
+  cash        Int
+  numOfTrades Int
+  rentEarned  Int
+  rentPaid    Int
+  netWorth    Int
+  // Add stats we would like to store/retrieve at the end of a game
+}
